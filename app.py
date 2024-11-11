@@ -39,7 +39,7 @@ params = st.experimental_get_query_params()
 
 
 # プロンプト
-prompt_list = ["preprompt_affirmative_individualizing_nuclear.txt", "preprompt_negative_binding_nuclear.txt"]
+prompt_list = ["prompt.txt"]
 # 待機時間
 # sleep_time_list = [60, 75, 75, 90, 60]
 sleep_time_list = [5, 5, 5, 5, 5]
@@ -48,7 +48,7 @@ sleep_time_list = [5, 5, 5, 5, 5]
 chat = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0,
-    max_tokens=None,
+    max_tokens=210,
     timeout=None,
     max_retries=0,
     api_key= st.secrets.openai_api_key
@@ -64,7 +64,7 @@ def input_id():
     with st.form("id_form", enter_to_submit=False):
         option = st.selectbox(
             "プロンプトファイル選択※テスト用フォーム",
-            ("{}".format(prompt_list[0]), "{}".format(prompt_list[1])),)
+            ("{}".format(prompt_list[0]))
         user_id = st.text_input('idを入力してください')
         submit_id = st.form_submit_button(
             label="送信",
@@ -110,7 +110,7 @@ def click_to_submit():
         st.session_state.response = conversation.predict(input=st.session_state.user_input)
         # st.session_state.memory.save_context({"input": st.session_state.user_input}, {"output": st.session_state.response})
         st.session_state.log.append({"role": "AI", "content": st.session_state.response})
-        sleep(sleep_time_list[st.session_state.talktime])
+        sleep(len(st.session_state.response))
         st.session_state.return_time = str(datetime.datetime.now(pytz.timezone('Asia/Tokyo')))
         doc_ref = db.collection(str(st.session_state.user_id)).document(str(st.session_state.talktime))
         doc_ref.set({
