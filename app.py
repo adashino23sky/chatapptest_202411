@@ -13,7 +13,7 @@ from langchain.prompts.chat import (
 # 時間管理
 from time import sleep
 import datetime
-import pytz # タイムゾーンに直せるやつ
+import pytz # タイムゾーン
 global now # PCから現在時刻
 now = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
 
@@ -22,6 +22,27 @@ import firebase_admin
 from google.oauth2 import service_account
 from google.cloud import firestore
 import json
+
+# クエリ取得
+params = st.experimental_get_query_params()
+
+#
+# 例： http:/hogehoge?param1=euthanasia&param2=2
+# params = {
+#   "param1": [
+#     "euthanasia"
+#   ],
+#   "params": [
+#     "2"
+#   ]
+# }
+
+
+# プロンプト
+prompt_list = ["preprompt_affirmative_individualizing_nuclear.txt", "preprompt_negative_binding_nuclear.txt"]
+# 待機時間
+# sleep_time_list = [60, 75, 75, 90, 60]
+sleep_time_list = [5, 5, 5, 5, 5]
 
 # モデルのインスタンス生成
 chat = ChatOpenAI(
@@ -36,21 +57,36 @@ chat = ChatOpenAI(
 if not "memory" in st.session_state:
     st.session_state.memory = ConversationBufferWindowMemory(k=8, return_messages=True)
 
-# システムプロンプトを読み込み
-fname = "prompt.txt"
-with open(fname, 'r', encoding='utf-8') as f:
-    systemprompt = f.read()
+# ID入力
+def input_id():
+    if not "user_id" in st.session_state:
+        st.session_state.user_id = "hogehoge"
+    with st.form("id_form", enter_to_submit=False):
+        option = st.selectbox(
+            "プロンプトファイル選択※テスト用フォーム",
+            ("{}".format(prompt_list[0]), "{}".format(prompt_list[1])),)
+        user_id = st.text_input('idを入力してください')
+        submit_id = st.form_submit_button(
+            label="送信",
+            type="primary")
+    if submit_id:
+        st.session_state.user_id = str(user_id)
+        fname = option
+        with open(fname, 'r', encoding='utf-8') as f:
+            st.session_state.systemprompt = f.read()
+        st.session_state.state = 2
+        st.rerun()
 
 # プロンプト設定
-template = systemprompt
-st.session_state.prompt = ChatPromptTemplate.from_messages([
-    SystemMessagePromptTemplate.from_template(template),
-    MessagesPlaceholder(variable_name="history"),
-    HumanMessagePromptTemplate.from_template("{input}")
-])
-
-# チェインを設定
-conversation = ConversationChain(llm=chat, memory=st.session_state.memory, prompt=st.session_state.prompt)
+if "systemprompt" in st.session_state:
+    template = st.session_state.systemprompt
+    st.session_state.prompt = ChatPromptTemplate.from_messages([
+        SystemMessagePromptTemplate.from_template(template),
+        MessagesPlaceholder(variable_name="history"),
+        HumanMessagePromptTemplate.from_template("{input}")
+    ])
+    # チェインを設定
+    conversation = ConversationChain(llm=chat, memory=st.session_state.memory, prompt=st.session_state.prompt)
 
 # Firebase 設定の読み込み
 key_dict = json.loads(st.secrets["firebase"]["textkey"])
@@ -58,22 +94,6 @@ creds = service_account.Credentials.from_service_account_info(key_dict)
 project_id = key_dict["project_id"]
 db = firestore.Client(credentials=creds, project=project_id)
 
-# 何かクエリを返す
-
-
-# ID入力
-def input_id():
-    if not "user_id" in st.session_state:
-        st.session_state.user_id = "hogehoge"
-    with st.form("id_form", enter_to_submit=False):
-        user_id = st.text_input('idを入力してください')
-        submit_id = st.form_submit_button(
-            label="送信",
-            type="primary")
-    if submit_id:
-        st.session_state.user_id = user_id
-        st.session_state.state = 2
-        st.rerun()
 
 # 入力時の動作
 def click_to_submit():
@@ -90,7 +110,7 @@ def click_to_submit():
         st.session_state.response = conversation.predict(input=st.session_state.user_input)
         # st.session_state.memory.save_context({"input": st.session_state.user_input}, {"output": st.session_state.response})
         st.session_state.log.append({"role": "AI", "content": st.session_state.response})
-        sleep(5)
+        sleep(sleep_time_list[st.session_state.talktime])
         st.session_state.return_time = str(datetime.datetime.now(pytz.timezone('Asia/Tokyo')))
         doc_ref = db.collection(str(st.session_state.user_id)).document(str(st.session_state.talktime))
         doc_ref.set({
@@ -138,8 +158,7 @@ def chat_page():
             会話は終了しました。以下のリンクをクリックしてアンケートに回答してください。  
             <a href="{url}" target="_blank">こちら</a>
             """,
-            unsafe_allow_html=True
-        )
+            unsafe_allow_html=True)
 
 def main():
     hide_streamlit_style = """
@@ -184,5 +203,5 @@ def main():
         click_to_submit()
 
 if __name__ == "__main__":
-    st.title('チャットボット')
+    st.title('チャット対話実験：先攻')
     main()
