@@ -64,7 +64,7 @@ def input_id():
     with st.form("id_form", enter_to_submit=False):
         option = st.selectbox(
             "プロンプトファイル選択※テスト用フォーム",
-            ("{}".format(prompt_list[0]))
+            ("{}".format(prompt_list[0])))
         user_id = st.text_input('idを入力してください')
         submit_id = st.form_submit_button(
             label="送信",
