@@ -110,7 +110,7 @@ def click_to_submit():
         st.session_state.response = conversation.predict(input=st.session_state.user_input)
         # st.session_state.memory.save_context({"input": st.session_state.user_input}, {"output": st.session_state.response})
         st.session_state.log.append({"role": "AI", "content": st.session_state.response})
-        sleep(len(st.session_state.response))
+        sleep(sleep_timelist[st.session_state.talktime])
         st.session_state.return_time = str(datetime.datetime.now(pytz.timezone('Asia/Tokyo')))
         doc_ref = db.collection(str(st.session_state.user_id)).document(str(st.session_state.talktime))
         doc_ref.set({
@@ -129,6 +129,7 @@ def chat_page():
         st.session_state.talktime = 0
     if not "log" in st.session_state:
         st.session_state.log = []
+    st.markdown("日本は原子力発電を廃止すべきかどうかについて、あなたの意見を述べ、議論を行ってください")
     chat_placeholder = st.empty()
     with chat_placeholder.container():
         for msg in st.session_state.log:
