@@ -14,7 +14,6 @@ from time import sleep
 import datetime
 import pytz
 global now
-now = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
 
 # Firebase
 import firebase_admin
@@ -22,22 +21,10 @@ from google.oauth2 import service_account
 from google.cloud import firestore
 import json
 
-# Prompt and sleep time
+# Prompt, model and sleep time
 prompt_list = ["preprompt_affirmative_individualizing_nuclear.txt", "preprompt_negative_binding_nuclear.txt"]
+model_list = ["gpt-4-preview", "gpt-4o", "gpt-4o-mini"]
 sleep_time_list = [5, 5, 5, 5, 5]
-
-# Model instance
-chat = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0,
-    max_tokens=None,
-    timeout=None,
-    max_retries=0,
-    api_key=st.secrets.openai_api_key
-)
-
-if "memory" not in st.session_state:
-    st.session_state.memory = ConversationBufferWindowMemory(k=8, return_messages=True)
 
 # ID input
 def input_id():
@@ -49,9 +36,8 @@ def input_id():
         user_id = st.text_input('学籍番号を半角数字で入力してください')
         submit_id = st.form_submit_button(label="送信", type="primary")
     if submit_id:
-        fname = prompt_option
         st.session_state.model = model_option
-        with open(fname, 'r', encoding='utf-8') as f:
+        with open(prompt_option, 'r', encoding='utf-8') as f:
             st.session_state.systemprompt = f.read()
         st.session_state.user_id = str(user_id)
         st.session_state.state = 2
@@ -65,9 +51,18 @@ if "systemprompt" in st.session_state:
         MessagesPlaceholder(variable_name="history"),
         HumanMessagePromptTemplate.from_template("{input}")
     ])
+
 if "model" in st.session_state:
-    
-    conversation = RunnableWithMessageHistory(llm=chat, memory=st.session_state.memory)
+    chat = ChatOpenAI(
+    model=st.session_state.model,
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+    max_retries=0,
+    api_key=st.secrets.openai_api_key
+    )
+    chain = prompt | llm
+    conversation = RunnableWithMessageHistory(llm=llm, memory=st.session_state.memory)
 
 # Firebase setup
 key_dict = json.loads(st.secrets["firebase"]["textkey"])
@@ -81,9 +76,9 @@ def click_to_submit():
     with chat_placeholder.container():
         for msg in [d for d in st.session_state.log if d.get("key") == st.session_state.talktime]:
             if msg["role"] == "user":
-                message(msg["content"], is_user=True, avatar_style="adventurer", seed="Nala")
+                message(msg.get("content"), is_user=True, avatar_style="adventurer", seed="Nala")
             else:
-                message(msg["content"], is_user=False, avatar_style="micah")
+                message(msg.get("content"), is_user=False, avatar_style="micah")
     with st.spinner("相手の返信を待っています…。"):
         st.session_state.send_time = str(datetime.datetime.now(pytz.timezone('Asia/Tokyo')))
         st.session_state.response = conversation.invoke(input=st.session_state.user_input)
@@ -93,9 +88,9 @@ def click_to_submit():
         doc_ref = db.collection(str(st.session_state.user_id)).document(str(st.session_state.talktime))
         doc_ref.set({
             "Human": st.session_state.user_input,
-            "AI_": st.session_state.response,
-            "Human_meg_sended": st.session_state.send_time,
-            "AI_meg_returned": st.session_state.return_time,
+            "AI": st.session_state.response,
+            "Human_msg_sended": st.session_state.send_time,
+            "AI_msg_returned": st.session_state.return_time,
         })
         st.session_state.talktime += 1
         st.session_state.state = 2
@@ -111,9 +106,9 @@ def chat_page():
     with chat_placeholder.container():
         for msg in [d for d in st.session_state.log if d.get("key") == st.session_state.talktime]:
             if msg["role"] == "user":
-                message(msg["content"], is_user=True, avatar_style="adventurer", seed="Nala")
+                message(msg.get("content"), is_user=True, avatar_style="adventurer", seed="Nala")
             else:
-                message(msg["content"], is_user=False, avatar_style="micah")
+                message(msg.get("content"), is_user=False, avatar_style="micah")
     if st.session_state.talktime < 5:
         if "user_input" not in st.session_state:
             st.session_state.user_input = "hogehoge"
