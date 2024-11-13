@@ -44,14 +44,16 @@ def input_id():
     if "user_id" not in st.session_state:
         st.session_state.user_id = "hogehoge"
     with st.form("id_form", enter_to_submit=False):
-        option = st.selectbox("プロンプトファイル選択※テスト用フォーム", (prompt_list[0], prompt_list[1]),)
-        user_id = st.text_input('idを入力してください')
+        prompt_option = st.selectbox("プロンプトファイル選択※テスト用フォーム", (prompt_list[0], prompt_list[1]),)
+        model_option = st.selectbox("モデル選択※テスト用フォーム", (model_list[0], model_list[1], model_list[2]),)
+        user_id = st.text_input('学籍番号を半角数字で入力してください')
         submit_id = st.form_submit_button(label="送信", type="primary")
     if submit_id:
-        st.session_state.user_id = str(user_id)
-        fname = option
+        fname = prompt_option
+        st.session_state.model = model_option
         with open(fname, 'r', encoding='utf-8') as f:
             st.session_state.systemprompt = f.read()
+        st.session_state.user_id = str(user_id)
         st.session_state.state = 2
         st.rerun()
 
@@ -63,7 +65,8 @@ if "systemprompt" in st.session_state:
         MessagesPlaceholder(variable_name="history"),
         HumanMessagePromptTemplate.from_template("{input}")
     ])
-    # Using RunnableWithMessageHistory
+if "model" in st.session_state:
+    
     conversation = RunnableWithMessageHistory(llm=chat, memory=st.session_state.memory)
 
 # Firebase setup
