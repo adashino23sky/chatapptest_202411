@@ -25,7 +25,7 @@ import json
 import tiktoken
 
 # プロンプト
-prompt_list = ["preprompt_affirmative_individualizing_nuclear.txt", "preprompt_negative_binding_nuclear.txt"]
+prompt_list = ["prompt.txt", "preprompt_affirmative_individualizing_nuclear.txt", "preprompt_negative_binding_nuclear.txt"]
 # モデル
 model_list = ["gpt-4-1106-preview", "gpt-4o", "gpt-4o-mini"]
 # 待機時間
