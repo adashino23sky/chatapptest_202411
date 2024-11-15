@@ -53,7 +53,7 @@ def input_id():
             label="送信",
             type="primary")
     if submit_id:
-        with open(prompt_list[1], 'r', encoding='utf-8') as f:
+        with open(prompt_list[0], 'r', encoding='utf-8') as f:
             st.session_state.systemprompt = f.read()
         st.session_state.model = model_option
         st.session_state.user_id = str(user_id)
