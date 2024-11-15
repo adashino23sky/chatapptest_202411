@@ -95,7 +95,7 @@ db = firestore.Client(credentials=creds, project=project_id)
 def click_to_submit():
     # 待機中にも履歴を表示
     chat_placeholder = st.empty()
-    with chat_placeholder.container():
+    with chat_placeholder.container(height=600):
         for msg in st.session_state.log:
             if msg["role"] == "user":
                 message(msg["content"], is_user=True, avatar_style="adventurer", seed="Nala")
@@ -130,7 +130,7 @@ def chat_page():
     if not "log" in st.session_state:
         st.session_state.log = []
     # 履歴表示
-    chat_placeholder = st.empty()
+    chat_placeholder = st.empty(height=600)
     with chat_placeholder.container():
         for msg in st.session_state.log:
             if msg["role"] == "user":
