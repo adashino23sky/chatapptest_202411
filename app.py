@@ -1,5 +1,8 @@
+# library streamlit
 import streamlit as st
 from streamlit_chat import message
+
+# library old langchain
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferWindowMemory
@@ -10,18 +13,20 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 
-# 時間管理
+# library time
 from time import sleep
 import datetime
-import pytz # タイムゾーン
-global now # PCから現在時刻
+import pytz # convert timezone
+global now # get time from user's PC
 now = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
 
-# firebase
+# library firebase
 import firebase_admin
 from google.oauth2 import service_account
 from google.cloud import firestore
 import json
+
+# library calculate tokens
 import tiktoken
 
 # プロンプト
@@ -33,7 +38,7 @@ sleep_time_list = [5, 5, 5, 5, 5, 5, 5, 5]
 # 表示テキスト
 text_list = ['「原子力発電を廃止すべきか否か」という意見に対して、あなたの意見を入力し、送信ボタンを押してください。', 'あなたの意見を入力し、送信ボタンを押してください。']
 
-# メモリ設定
+# メモリ初期化
 if not "memory" in st.session_state:
     st.session_state.memory = ConversationBufferWindowMemory(k=8, return_messages=True)
 
@@ -127,6 +132,7 @@ def click_to_submit():
 
 # チャット画面
 def chat_page():
+    # 会話回数とログ初期化
     if not "talktime" in st.session_state:
         st.session_state.talktime = 0
     if not "log" in st.session_state:
@@ -145,7 +151,8 @@ def chat_page():
             # st.write("input tokens : {}※テスト用".format(st.session_state.input_tokens))
             # st.write("output tokens : {}※テスト用".format(st.session_state.output_tokens))
     # 入力フォーム
-    if st.session_state.talktime < 5:
+    if st.session_state.talktime < 5: # 会話時
+        # 念のため初期化
         if not "user_input" in st.session_state:
             st.session_state.user_input = "hogehoge"
         with st.container():
@@ -173,7 +180,7 @@ def chat_page():
                     # st.session_state.total_input_tokens += len(tokens)
                 st.session_state.state = 3
                 st.rerun()
-    elif st.session_state.talktime == 5: # 終了時の動作
+    elif st.session_state.talktime == 5: # 会話終了時
         url = "https://nagoyapsychology.qualtrics.com/jfe/form/SV_87jQ6Hj2rjLDdSm"
         # print total token counts
         # st.write("total input tokens : {}※テスト用".format(st.session_state.total_input_tokens))
